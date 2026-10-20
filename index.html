@@ -1,0 +1,469 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#15202b">
+<title>Libreta del Auto</title>
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}</style>
+</head>
+<body>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: one narrow phone column — live "liquidación" ticket on top, form, then shared day log */
+:root{
+  --bg:#eef0f3; --surface:#ffffff; --ink:#15202b; --muted:#5c6876; --line:#d6dbe2;
+  --accent:#f2a516; --accent-ink:#2b1d00; --owe:#0f7a55; --owe-bg:#e3f4ec; --due:#b4372b; --due-bg:#fbe7e4;
+  --ticket:#15202b; --ticket-ink:#f4f6f8; --ticket-muted:#9aa6b4; --wa:#128c4a;
+  --display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
+  --body:"Figtree",ui-sans-serif,system-ui,-apple-system,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f141a; --surface:#18202a; --ink:#e8edf2; --muted:#93a0ae; --line:#2a3542;
+  --accent:#f5b232; --accent-ink:#241800; --owe:#4fd1a0; --owe-bg:#12302a; --due:#ff8a7d; --due-bg:#3a1c19;
+  --ticket:#222c38; --ticket-ink:#f4f6f8; --ticket-muted:#a3afbc; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f141a; --surface:#18202a; --ink:#e8edf2; --muted:#93a0ae; --line:#2a3542;
+  --accent:#f5b232; --accent-ink:#241800; --owe:#4fd1a0; --owe-bg:#12302a; --due:#ff8a7d; --due-bg:#3a1c19;
+  --ticket:#222c38; --ticket-ink:#f4f6f8; --ticket-muted:#a3afbc; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:16px/1.45 var(--body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 48px}
+.wrap{max-width:480px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+header{display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
+h1{font:800 1.9rem/1 var(--display);margin:0;letter-spacing:-.02em;text-wrap:balance}
+h1 span{color:var(--accent)}
+.sub{color:var(--muted);font-size:.9rem;margin-top:4px}
+h2{font:600 1.15rem/1.2 var(--display);margin:0}
+.label{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+/* Ticket */
+.ticket{background:var(--ticket);color:var(--ticket-ink);border-radius:16px;padding:18px 18px 16px;position:relative}
+.ticket .label{color:var(--ticket-muted)}
+.ticket .big{font:700 2.1rem/1.1 var(--mono);margin:6px 0 2px;font-variant-numeric:tabular-nums;word-break:break-word}
+.ticket .verdict{font-weight:600;font-size:1rem}
+.ticket .verdict.owe{color:var(--owe)} .ticket .verdict.due{color:var(--due)}
+.ticket hr{border:0;border-top:1px dashed color-mix(in srgb,var(--ticket-muted) 50%,transparent);margin:14px 0}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.split div{min-width:0}
+.split .num{font-size:1.15rem;font-weight:700;display:block;margin-top:2px}
+.rows{display:grid;gap:4px;font-size:.88rem;color:var(--ticket-muted)}
+.rows div{display:flex;justify-content:space-between;gap:8px}
+.rows .num{color:var(--ticket-ink)}
+
+/* Form */
+form{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px;display:grid;gap:14px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid3{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:10px}
+.field{display:grid;gap:5px;min-width:0}
+.field label{font-size:.85rem;font-weight:600}
+.field small{color:var(--muted);font-size:.75rem}
+input,select{width:100%;font:500 1rem var(--body);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:11px 12px;min-height:46px}
+input.money{font-family:var(--mono);font-variant-numeric:tabular-nums}
+input:focus-visible,select:focus-visible,button:focus-visible{outline:3px solid color-mix(in srgb,var(--accent) 70%,transparent);outline-offset:1px}
+.seg{display:grid;grid-template-columns:1fr 1fr;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:3px;gap:3px}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg label{text-align:center;padding:9px 6px;border-radius:8px;font-size:.88rem;font-weight:600;color:var(--muted);cursor:pointer}
+.seg input:checked+label{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgb(0 0 0 / .12)}
+.seg input:focus-visible+label{outline:3px solid color-mix(in srgb,var(--accent) 70%,transparent)}
+details{border-top:1px solid var(--line);padding-top:12px}
+summary{cursor:pointer;font-weight:600;font-size:.9rem;color:var(--muted)}
+details .inner{display:grid;gap:12px;margin-top:12px}
+.btn{font:700 1rem var(--body);border:0;border-radius:12px;padding:14px 16px;cursor:pointer;min-height:50px}
+.btn.primary{background:var(--accent);color:var(--accent-ink)}
+.btn.primary:disabled{opacity:.5;cursor:not-allowed}
+.btn.ghost{background:transparent;color:var(--muted);border:1px solid var(--line);padding:8px 12px;min-height:38px;font-size:.85rem}
+.note{font-size:.85rem;color:var(--muted)}
+.sharebox{display:grid;gap:8px;border-top:1px solid var(--line);padding-top:12px}
+.sharebtns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.btn.soft{background:var(--bg);color:var(--ink);border:1px solid var(--line)}
+.btn.wa{background:var(--wa);color:#fff;text-decoration:none;display:flex;align-items:center;justify-content:center;text-align:center}
+textarea{width:100%;font:500 .9rem var(--mono);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;resize:vertical}
+textarea:focus-visible{outline:3px solid color-mix(in srgb,var(--accent) 70%,transparent);outline-offset:1px}
+.toast{font-size:.9rem;font-weight:600;color:var(--owe)}
+.toast.err{color:var(--due)}
+
+/* Log */
+.logbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.chips{display:flex;gap:6px}
+.chip{font:600 .82rem var(--body);padding:7px 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--muted);cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.totals{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px 16px;display:grid;gap:10px}
+.totals .grid2 .num{font-size:1.05rem;font-weight:700;display:block}
+.pending{border-radius:12px;padding:12px 14px;font-weight:600}
+.pending.owe{background:var(--owe-bg);color:var(--owe)}
+.pending.due{background:var(--due-bg);color:var(--due)}
+.pending.zero{background:var(--bg);color:var(--muted)}
+.pending .num{font-size:1.25rem;display:block;margin-top:2px}
+ul.days{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.day{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px;display:grid;gap:8px}
+.day.paid{opacity:.62}
+.dayhead{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.dayhead strong{font-weight:700}
+.dayhead .when{color:var(--muted);font-size:.82rem}
+.daymeta{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:.82rem;color:var(--muted)}
+.daymeta .num{color:var(--ink)}
+.pill{font:700 .78rem var(--body);padding:4px 9px;border-radius:999px;white-space:nowrap}
+.pill.owe{background:var(--owe-bg);color:var(--owe)}
+.pill.due{background:var(--due-bg);color:var(--due)}
+.pill.paid{background:var(--bg);color:var(--muted)}
+.dayactions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.empty{background:var(--surface);border:1px dashed var(--line);border-radius:14px;padding:18px;color:var(--muted);text-align:center;font-size:.9rem}
+@media (max-width:380px){.grid3{grid-template-columns:1fr 1fr}.grid3 .field:first-child{grid-column:1/-1}.ticket .big{font-size:1.75rem}}
+@media (prefers-reduced-motion:no-preference){.btn,.chip{transition:filter .15s}.btn:active{filter:brightness(.92)}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Libreta del <span>Auto</span></h1>
+      <div class="sub">Uber · reparto entre dueño y conductora</div>
+    </div>
+  </header>
+
+  <section class="ticket" aria-live="polite">
+    <div class="label">Liquidación del día</div>
+    <div class="big num" id="tBig">$ 0</div>
+    <div class="verdict" id="tVerdict">Completá los montos para ver el resultado</div>
+    <hr>
+    <div class="split">
+      <div><div class="label">Gana la conductora</div><span class="num" id="tDriver">$ 0</span></div>
+      <div><div class="label">Gana el dueño</div><span class="num" id="tOwner">$ 0</span></div>
+    </div>
+    <hr>
+    <div class="rows">
+      <div><span>Ganancia total Uber</span><span class="num" id="rTotal">$ 0</span></div>
+      <div><span>Cobrado por la app</span><span class="num" id="rApp">$ 0</span></div>
+      <div><span>Combustible y gastos</span><span class="num" id="rGastos">$ 0</span></div>
+      <div><span>Ganancia neta</span><span class="num" id="rNeta">$ 0</span></div>
+      <div><span>Por hora</span><span class="num" id="rHora">—</span></div>
+    </div>
+  </section>
+
+  <form id="f" novalidate>
+    <h2>Cargar día</h2>
+    <div class="grid3">
+      <div class="field"><label for="fecha">Fecha</label><input id="fecha" type="date" required></div>
+      <div class="field"><label for="ini">Desde</label><input id="ini" type="time" value="10:00"></div>
+      <div class="field"><label for="fin">Hasta</label><input id="fin" type="time" value="18:00"></div>
+    </div>
+    <div class="field">
+      <label for="total">Ganancia total Uber</label>
+      <input id="total" class="money" inputmode="decimal" placeholder="67.717" autocomplete="off">
+      <small>El total que muestra la app, con los viajes en efectivo incluidos.</small>
+    </div>
+    <div class="grid2">
+      <div class="field"><label for="efectivo">Cobrado en efectivo</label><input id="efectivo" class="money" inputmode="decimal" placeholder="44.352" autocomplete="off"></div>
+      <div class="field"><label for="comb">Combustible</label><input id="comb" class="money" inputmode="decimal" placeholder="28.502,93" autocomplete="off"></div>
+    </div>
+    <div class="field"><label for="otros">Otros gastos <span class="note">(peaje, lavado…)</span></label><input id="otros" class="money" inputmode="decimal" placeholder="0" autocomplete="off"></div>
+
+    <details id="adv">
+      <summary>Quién cobró y quién pagó</summary>
+      <div class="inner">
+        <div class="field"><span class="label">Lo que paga la app entra en la cuenta de</span>
+          <div class="seg" role="radiogroup">
+            <input type="radio" name="appA" id="appC" value="conductora" checked><label for="appC">Conductora</label>
+            <input type="radio" name="appA" id="appD" value="dueno"><label for="appD">Dueño</label>
+          </div></div>
+        <div class="field"><span class="label">El combustible lo pagó</span>
+          <div class="seg" role="radiogroup">
+            <input type="radio" name="combPor" id="combC" value="conductora" checked><label for="combC">Conductora</label>
+            <input type="radio" name="combPor" id="combD" value="dueno"><label for="combD">Dueño</label>
+          </div></div>
+        <div class="field"><label for="pct">% de ganancia para la conductora</label>
+          <input id="pct" type="number" min="0" max="100" step="1" value="50" inputmode="numeric">
+          <small>Se aplica igual a la ganancia y al combustible. Acordado: 50%.</small></div>
+      </div>
+    </details>
+
+    <div class="sharebox">
+      <span class="label">Mandar el resumen al dueño</span>
+      <div class="sharebtns">
+        <button class="btn soft" id="copy" type="button">Copiar resumen</button>
+        <a class="btn wa" id="wa" href="https://wa.me/" target="_blank" rel="noopener">Enviar por WhatsApp</a>
+      </div>
+      <textarea id="copyfall" rows="6" readonly hidden aria-label="Resumen para copiar"></textarea>
+    </div>
+
+    <details id="pasteBox">
+      <summary>Pegar resumen recibido por WhatsApp</summary>
+      <div class="inner">
+        <div class="field"><label for="pasteTxt">Pegá acá el mensaje que te mandó la conductora</label>
+          <textarea id="pasteTxt" rows="6" placeholder="Día 20/10/2026 · 10:00 a 18:00&#10;Uber total: $ 67.717,00&#10;…"></textarea></div>
+        <button class="btn soft" id="pasteBtn" type="button">Completar el formulario</button>
+      </div>
+    </details>
+
+    <button class="btn primary" id="save" type="submit">Guardar día</button>
+    <div id="msg" class="note" role="status"></div>
+  </form>
+
+  <section id="logSec" style="display:grid;gap:12px">
+    <div class="logbar">
+      <h2>Días cargados</h2>
+      <div class="chips" role="group" aria-label="Período">
+        <button class="chip" data-p="semana" aria-pressed="false" type="button">Semana</button>
+        <button class="chip" data-p="mes" aria-pressed="true" type="button">Mes</button>
+        <button class="chip" data-p="todo" aria-pressed="false" type="button">Todo</button>
+      </div>
+    </div>
+    <div class="totals">
+      <div id="pend" class="pending zero">Sin saldos pendientes</div>
+      <div class="grid2">
+        <div><div class="label">Ganancia neta</div><span class="num" id="sNeta">$ 0</span></div>
+        <div><div class="label">Días · horas</div><span class="num" id="sDias">0 · 0 h</span></div>
+        <div><div class="label">Conductora</div><span class="num" id="sDriver">$ 0</span></div>
+        <div><div class="label">Dueño</div><span class="num" id="sOwner">$ 0</span></div>
+      </div>
+    </div>
+    <ul class="days" id="days"><li class="empty" id="emptyMsg">Cargando días…</li></ul>
+  </section>
+</div>
+
+<script>
+(function(){
+  const $ = id => document.getElementById(id);
+  const fmt = n => (n<0?"-":"") + "$ " + Math.abs(n).toLocaleString("es-AR",{minimumFractionDigits:2,maximumFractionDigits:2});
+  const fmt0 = n => (n<0?"-":"") + "$ " + Math.round(Math.abs(n)).toLocaleString("es-AR");
+
+  function parseMoney(s){
+    s = String(s||"").trim().replace(/[$\s]/g,"");
+    if(!s) return 0;
+    if(s.includes(",")) s = s.replace(/\./g,"").replace(",",".");
+    else if(/^\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g,"");
+    const n = parseFloat(s);
+    return isFinite(n) ? n : 0;
+  }
+  function hours(a,b){
+    if(!a||!b) return 0;
+    const [h1,m1]=a.split(":").map(Number),[h2,m2]=b.split(":").map(Number);
+    let d=(h2*60+m2)-(h1*60+m1); if(d<0) d+=1440; return d/60;
+  }
+  // Pure calculation shared by the live ticket and the log
+  function calc(d){
+    const pct = Math.min(100,Math.max(0,Number(d.pct ?? 50)))/100;
+    const gastos = (d.comb||0)+(d.otros||0);
+    const neta = (d.total||0) - gastos;
+    const app = (d.total||0) - (d.efectivo||0);
+    const driver = neta*pct, owner = neta*(1-pct);
+    const holds = (d.efectivo||0) + (d.appA==="dueno"?0:app) - (d.combPor==="dueno"?0:gastos);
+    const transfer = holds - driver; // >0: conductora pasa al dueño; <0: dueño pasa a conductora
+    const h = hours(d.ini,d.fin);
+    return {gastos,neta,app,driver,owner,transfer,h,porHora:h?neta/h:0};
+  }
+
+  function readForm(){
+    return {
+      fecha:$("fecha").value, ini:$("ini").value, fin:$("fin").value,
+      total:parseMoney($("total").value), efectivo:parseMoney($("efectivo").value),
+      comb:parseMoney($("comb").value), otros:parseMoney($("otros").value),
+      appA:document.querySelector('input[name="appA"]:checked').value,
+      combPor:document.querySelector('input[name="combPor"]:checked').value,
+      pct:Number($("pct").value||50)
+    };
+  }
+  function verdict(t){
+    if(Math.abs(t) < 0.5) return {cls:"", text:"Están a mano, nadie le debe a nadie"};
+    return t>0 ? {cls:"owe", text:"La conductora le pasa al dueño"} : {cls:"due", text:"El dueño le pasa a la conductora"};
+  }
+  function renderTicket(){
+    const d = readForm(), c = calc(d);
+    const has = d.total>0;
+    $("tBig").textContent = has ? fmt(Math.abs(c.transfer)) : "$ 0";
+    const v = verdict(c.transfer);
+    $("tVerdict").className = "verdict " + (has?v.cls:"");
+    $("tVerdict").textContent = has ? v.text : "Completá los montos para ver el resultado";
+    $("tDriver").textContent = fmt(c.driver); $("tOwner").textContent = fmt(c.owner);
+    $("rTotal").textContent = fmt(d.total); $("rApp").textContent = fmt(c.app);
+    $("rGastos").textContent = fmt(-c.gastos); $("rNeta").textContent = fmt(c.neta);
+    $("rHora").textContent = c.h && has ? fmt0(c.porHora)+" / h · "+c.h.toFixed(1).replace(".",",")+" h" : "—";
+    if(d.efectivo > d.total && d.total>0) msg("El efectivo no puede ser mayor que la ganancia total.", true);
+    else if(msgIsWarn) msg("");
+    $("wa").href = "https://wa.me/?text=" + encodeURIComponent(summary());
+  }
+
+  // ---------- WhatsApp summary (format is also what the paste parser reads) ----------
+  const quien = v => v==="dueno" ? "Dueño" : "Conductora";
+  function summary(){
+    const d = readForm(), c = calc(d);
+    const f = d.fecha ? d.fecha.split("-").reverse().join("/") : "";
+    const v = verdict(c.transfer);
+    return [
+      "Libreta del Auto",
+      "Día " + f + (d.ini&&d.fin ? " · " + d.ini + " a " + d.fin : ""),
+      "Uber total: " + fmt(d.total),
+      "Efectivo: " + fmt(d.efectivo),
+      "Combustible: " + fmt(d.comb),
+      "Otros gastos: " + fmt(d.otros),
+      "App cobra: " + quien(d.appA) + " · Combustible pagó: " + quien(d.combPor) + " · % conductora: " + d.pct,
+      "Ganancia neta: " + fmt(c.neta),
+      "Gana cada uno: conductora " + fmt(c.driver) + " · dueño " + fmt(c.owner),
+      (Math.abs(c.transfer)<0.5 ? "Estamos a mano" : v.text + ": " + fmt(Math.abs(c.transfer)))
+    ].join("\n");
+  }
+  $("copy").addEventListener("click", ()=>{
+    if(!(readForm().total>0)){ msg("Primero completá la ganancia total de Uber.",true); return; }
+    const t = summary(), fb = $("copyfall");
+    const fallback = ()=>{ fb.value=t; fb.hidden=false; fb.focus(); fb.select(); msg("Seleccioná el texto de abajo y copialo."); };
+    try{
+      navigator.clipboard.writeText(t).then(()=>{ fb.hidden=true; msg("Resumen copiado. Pegalo en WhatsApp."); }, fallback);
+    }catch(e){ fallback(); }
+  });
+  $("wa").addEventListener("click", ev=>{
+    if(!(readForm().total>0)){ ev.preventDefault(); msg("Primero completá la ganancia total de Uber.",true); }
+  });
+  $("pasteBtn").addEventListener("click", ()=>{
+    const t = $("pasteTxt").value;
+    const grab = re => { const m = t.match(re); return m ? m[1].trim() : null; };
+    const fecha = grab(/D[ií]a\s+(\d{1,2}\/\d{1,2}\/\d{4})/i);
+    const horas = t.match(/(\d{1,2}:\d{2})\s*a\s*(\d{1,2}:\d{2})/);
+    const total = grab(/Uber total:\s*([^\n]+)/i);
+    if(!total){ msg("No encontré la ganancia de Uber en el mensaje. Copiá el resumen completo y probá de nuevo.",true); return; }
+    if(fecha){ const [dd,mm,yy]=fecha.split("/"); $("fecha").value = yy+"-"+mm.padStart(2,"0")+"-"+dd.padStart(2,"0"); }
+    if(horas){ $("ini").value = horas[1].padStart(5,"0"); $("fin").value = horas[2].padStart(5,"0"); }
+    const setM = (id,re)=>{ const v=grab(re); $(id).value = v ? String(parseMoney(v)).replace(".",",") : ""; };
+    setM("total",/Uber total:\s*([^\n]+)/i); setM("efectivo",/Efectivo:\s*([^\n]+)/i);
+    setM("comb",/Combustible:\s*([^\n·]+)/i); setM("otros",/Otros gastos:\s*([^\n]+)/i);
+    const app = grab(/App cobra:\s*(Due[ñn]o|Conductora)/i), cp = grab(/Combustible pag[oó]:\s*(Due[ñn]o|Conductora)/i), pc = grab(/% conductora:\s*(\d+)/i);
+    if(app) $(/^due/i.test(app)?"appD":"appC").checked = true;
+    if(cp) $(/^due/i.test(cp)?"combD":"combC").checked = true;
+    if(pc) $("pct").value = pc;
+    renderTicket();
+    msg("Formulario completado. Revisá los montos y tocá Guardar día.");
+    $("pasteTxt").value = ""; $("pasteBox").open = false;
+    window.scrollTo({top:0, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth"});
+  });
+  let msgIsWarn=false;
+  function msg(t,err){ const m=$("msg"); m.textContent=t; m.className = t ? ("toast"+(err?" err":"")) : "note"; msgIsWarn=!!err; }
+
+  // defaults
+  const today = new Date(); const iso = d => d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+  $("fecha").value = iso(today);
+  try{ const p = localStorage.getItem("pct"); if(p) $("pct").value = p; }catch(e){}
+  ["fecha","ini","fin","total","efectivo","comb","otros","pct"].forEach(id=>$(id).addEventListener("input",renderTicket));
+  document.querySelectorAll('input[type=radio]').forEach(r=>r.addEventListener("change",renderTicket));
+  $("pct").addEventListener("change",()=>{ try{localStorage.setItem("pct",$("pct").value)}catch(e){} });
+  renderTicket();
+
+  // ---------- Shared log ----------
+  let days = [], period = "mes", db = null, canWrite = true, pendingDelete = null;
+  document.querySelectorAll(".chip").forEach(b=>b.addEventListener("click",()=>{
+    period=b.dataset.p; document.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed",String(x===b))); renderLog();
+  }));
+  function inPeriod(f){
+    if(period==="todo") return true;
+    const d = new Date(f+"T12:00:00"), now = new Date();
+    if(period==="mes") return d.getFullYear()===now.getFullYear() && d.getMonth()===now.getMonth();
+    const start = new Date(now); const wd=(now.getDay()+6)%7; start.setDate(now.getDate()-wd); start.setHours(0,0,0,0);
+    return d>=start;
+  }
+  const fechaLarga = f => new Date(f+"T12:00:00").toLocaleDateString("es-AR",{weekday:"short",day:"numeric",month:"short"});
+
+  function renderLog(){
+    const ul=$("days"); ul.textContent="";
+    const list = days.filter(d=>inPeriod(d.fecha)).sort((a,b)=> (b.fecha+(b.ini||"")).localeCompare(a.fecha+(a.ini||"")));
+    let neta=0,dr=0,ow=0,h=0,pend=0;
+    list.forEach(d=>{ const c=calc(d); neta+=c.neta; dr+=c.driver; ow+=c.owner; h+=c.h; if(!d.pagado) pend+=c.transfer; });
+    $("sNeta").textContent=fmt0(neta); $("sDriver").textContent=fmt0(dr); $("sOwner").textContent=fmt0(ow);
+    $("sDias").textContent=list.length+" · "+Math.round(h)+" h";
+    const p=$("pend");
+    if(Math.abs(pend)<0.5){ p.className="pending zero"; p.textContent="Sin saldos pendientes en este período"; }
+    else { p.className="pending "+(pend>0?"owe":"due"); p.innerHTML=""; p.append(pend>0?"Pendiente: la conductora le pasa al dueño":"Pendiente: el dueño le pasa a la conductora");
+      const s=document.createElement("span"); s.className="num"; s.textContent=fmt(Math.abs(pend)); p.append(s); }
+
+    if(!list.length){
+      const li=document.createElement("li"); li.className="empty";
+      li.textContent = db===null && !dbReady ? "Cargando días…" : (days.length ? "No hay días en este período." : "Todavía no hay días guardados. Cargá el primero arriba y tocá Guardar día.");
+      ul.append(li); return;
+    }
+    list.forEach(d=>{
+      const c=calc(d), li=document.createElement("li"); li.className="day"+(d.pagado?" paid":"");
+      const head=document.createElement("div"); head.className="dayhead";
+      const left=document.createElement("div");
+      const st=document.createElement("strong"); st.textContent=fechaLarga(d.fecha);
+      const w=document.createElement("div"); w.className="when"; w.textContent=(d.ini&&d.fin?d.ini+" a "+d.fin+" · ":"")+"neta "+fmt0(c.neta);
+      left.append(st,w);
+      const pill=document.createElement("span");
+      if(d.pagado){ pill.className="pill paid"; pill.textContent="Saldado"; }
+      else if(Math.abs(c.transfer)<0.5){ pill.className="pill paid"; pill.textContent="A mano"; }
+      else { pill.className="pill "+(c.transfer>0?"owe":"due"); pill.textContent=(c.transfer>0?"Le pasa al dueño ":"Le pasa a ella ")+fmt0(Math.abs(c.transfer)); }
+      head.append(left,pill);
+      const meta=document.createElement("div"); meta.className="daymeta";
+      [["Uber",d.total],["Efectivo",d.efectivo],["Combustible",d.comb],["Cada uno",c.driver]].forEach(([k,v])=>{
+        const s=document.createElement("span"); s.append(k+" "); const n=document.createElement("span"); n.className="num"; n.textContent=fmt0(v); s.append(n); meta.append(s); });
+      li.append(head,meta);
+      if(db && canWrite){
+        const act=document.createElement("div"); act.className="dayactions";
+        const pay=document.createElement("button"); pay.type="button"; pay.className="btn ghost"; pay.textContent=d.pagado?"Marcar pendiente":"Marcar saldado";
+        pay.onclick=()=>write(()=>db.collection("dias").doc(d.id).update({pagado:!d.pagado}));
+        const del=document.createElement("button"); del.type="button"; del.className="btn ghost";
+        if(pendingDelete===d.id){ del.textContent="¿Borrar? Tocá de nuevo"; del.style.color="var(--due)"; del.onclick=()=>{pendingDelete=null; write(()=>db.collection("dias").doc(d.id).delete());}; }
+        else { del.textContent="Borrar"; del.onclick=()=>{pendingDelete=d.id; renderLog(); setTimeout(()=>{ if(pendingDelete===d.id){pendingDelete=null;renderLog();} },4000);}; }
+        act.append(pay,del); li.append(act);
+      }
+      ul.append(li);
+    });
+  }
+  let dbReady=false;
+  async function write(fn){
+    try{ await fn(); }
+    catch(e){
+      if(e && e.code==="invalid_argument"){ canWrite=false; msg("Tu acceso a esta página es solo para mirar. Pedile al dueño que te comparta con permiso para cargar.", true); renderLog(); }
+      else msg("No se pudo guardar. Revisá la conexión y probá de nuevo.", true);
+      throw e;
+    }
+  }
+
+  $("f").addEventListener("submit", async ev=>{
+    ev.preventDefault();
+    const d=readForm();
+    if(!d.fecha){ msg("Elegí la fecha.",true); return; }
+    if(!(d.total>0)){ msg("Poné la ganancia total de Uber.",true); return; }
+    if(d.efectivo>d.total){ msg("El efectivo no puede ser mayor que la ganancia total.",true); return; }
+    if(!db){ msg(dbReady ? "No se puede guardar desde esta vista. Abrí la página desde claude.ai con tu cuenta iniciada. El cálculo de arriba ya está listo." : "Conectando con el historial, esperá un segundo y tocá de nuevo.",true); return; }
+    $("save").disabled=true;
+    try{
+      const id = "d-"+d.fecha.replace(/-/g,"")+"-"+Date.now().toString(36);
+      await write(()=>db.collection("dias").doc(id).set({...d, pagado:false, creado:new Date().toISOString()}));
+      msg("Día guardado. Ya lo ven los dos.");
+      ["total","efectivo","comb","otros"].forEach(x=>$(x).value="");
+      renderTicket();
+    }catch(e){} finally{ $("save").disabled=false; }
+  });
+
+  (async()=>{
+    const hasClaude = !!(window.claude && typeof window.claude.use === "function");
+    if(!hasClaude){
+      // Hosted outside claude.ai (e.g. GitHub Pages): calculator + WhatsApp only
+      dbReady=true; $("save").hidden=true; $("logSec").hidden=true; $("pasteBox").hidden=true; return;
+    }
+    {
+      try{ db = await window.claude.use("db"); }catch(e){ db=null; }
+      try{
+        const user = await window.claude.use("user");
+        if(user && typeof user.can === "function"){ const cw = await user.can("data.write"); if(cw===false) canWrite=false; }
+      }catch(e){}
+    }
+    dbReady=true;
+    if(!db){
+      // Signed out or public link: calculator + WhatsApp only
+      $("save").hidden=true; $("logSec").hidden=true; $("pasteBox").hidden=true;
+      msg("Calculá el día y mandale el resumen al dueño por WhatsApp. Para guardar el historial hace falta entrar con una cuenta de Claude.");
+      return;
+    }
+    if(!canWrite){ $("save").disabled=true; msg("Podés ver los días, pero no cargar. Pedile al dueño permiso de Colaborador."); }
+    db.collection("dias").onSnapshot(snap=>{
+      days = snap.docs.map(s=>({id:s.id, ...s.data()}));
+      renderLog();
+    }, err=>{ msg("Se cortó la conexión con el historial. Recargá la página.", true); });
+  })();
+})();
+</script>
+
+</body>
+</html>
